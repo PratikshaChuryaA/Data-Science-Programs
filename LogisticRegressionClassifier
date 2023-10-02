@@ -1,0 +1,73 @@
+import json
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix
+
+class_names = iris.target_names
+
+# Load the Iris dataset
+iris = load_iris()
+X, y = iris.data, iris.target
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Apply feature scaling to the data
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Train the logistic regression classifier with regularization
+C = 1e4
+model = LogisticRegression(C=C, penalty='l2', solver='liblinear', max_iter=1000)
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Calculate and print the accuracy of the model
+accuracy = accuracy_score(y_test, y_pred)
+print("Classification Accuracy:", accuracy)
+
+cm = confusion_matrix(y_test, y_pred)
+
+# Plot the confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=class_names, yticklabels=class_names)
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted Class")
+plt.ylabel("True Class")
+plt.show()
+
+# Test a new data point
+new_data = np.array([[5.1, 3.5, 1.4, 0.2]])  # Example new data point
+
+# Apply feature scaling to the new data
+new_data_scaled = scaler.transform(new_data)
+
+# Predict the class label for the new data point
+predicted_class = model.predict(new_data_scaled)
+
+# Map the predicted class label to the class name
+predicted_class_name = class_names[predicted_class[0]]
+
+print("Predicted Class:", predicted_class_name)
+
+#storing model in JSON format
+# Convert the model to a dictionary
+model_dict = {
+    "coef": model.coef_.tolist(),
+    "intercept": model.intercept_.tolist(),
+    "classes": iris.target_names.tolist(),
+    "features": iris.feature_names
+}
+
+# Save the model dictionary as JSON
+with open("model.json", "w") as json_file:
+    json.dump(model_dict, json_file)
